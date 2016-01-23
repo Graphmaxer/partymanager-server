@@ -1,7 +1,7 @@
 {
   "name": "PartyManager",
   "version": "1.0.0",
-  "description": "PartyManager : Node.js application",
+  "description": "PartyManager : Node.js server",
   "keywords": [
     "OpenShift",
     "Node.js",
@@ -11,9 +11,9 @@
   "author": {
     "name": "Graphmaxer",
     "email": "m.lambotin@gmail.com",
-    "url": "http://partymanager-graphmaxer.rhcloud.com/"
+    "url": "http://partymanagerserver-graphmaxer.rhcloud.com/"
   },
-  "homepage": "http://partymanager-graphmaxer.rhcloud.com/",
+  "homepage": "http://partymanagerserver-graphmaxer.rhcloud.com/",
   "repository": {
     "type": "git",
     "url": "https://github.com/Graphmaxer/partymanager-server"
