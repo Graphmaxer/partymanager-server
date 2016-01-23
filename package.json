@@ -1,22 +1,22 @@
 {
-  "name": "OpenShift-Sample-App",
+  "name": "PartyManager",
   "version": "1.0.0",
-  "description": "OpenShift Sample Application",
+  "description": "PartyManager : Node.js application",
   "keywords": [
     "OpenShift",
     "Node.js",
     "application",
-    "openshift"
+    "socket.io"
   ],
   "author": {
-    "name": "OpenShift",
-    "email": "ramr@example.org",
-    "url": "http://www.openshift.com/"
+    "name": "Graphmaxer",
+    "email": "m.lambotin@gmail.com",
+    "url": "http://partymanager-graphmaxer.rhcloud.com/"
   },
-  "homepage": "http://www.openshift.com/",
+  "homepage": "http://partymanager-graphmaxer.rhcloud.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/openshift/origin-server"
+    "url": "https://github.com/Graphmaxer/partymanager"
   },
 
   "engines": {
