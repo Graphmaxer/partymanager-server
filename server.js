@@ -1,6 +1,6 @@
-var http    =	require('http');
-var fs      =	require('fs');
-var config = require('./config');	
+var http = require('http');
+var fs = require('fs');
+var config = require('config');	
 
 // Creation du serveur
 var app = http.createServer(function (req, res) {
@@ -18,7 +18,7 @@ var messages = [];
 
 //// SOCKET.IO ////
 
-var io	    =	require('socket.io');
+var io = require('socket.io');
 
 // Socket io ecoute maintenant notre application !
 io = io.listen(app); 

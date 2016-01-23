@@ -1,33 +1,33 @@
 {
-  "name": "PartyManager",
-  "version": "1.0.0",
-  "description": "PartyManager : Node.js server",
-  "keywords": [
-    "OpenShift",
-    "Node.js",
-    "application",
-    "socket.io"
-  ],
-  "author": {
-    "name": "Graphmaxer",
-    "email": "m.lambotin@gmail.com",
-    "url": "http://partymanagerserver-graphmaxer.rhcloud.com/"
-  },
-  "homepage": "http://partymanagerserver-graphmaxer.rhcloud.com/",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Graphmaxer/partymanager-server"
-  },
-  "engines": {
-    "node": ">= 0.6.0",
-    "npm": ">= 1.0.0"
-  },
-  "dependencies": {
-    "express": "^4.13.4",
-    "socket.io": "~1.4.3"
-  },
-  "devDependencies": {},
-  "bundleDependencies": [],
-  "private": true,
-  "main": "server.js"
+	"name": "PartyManager",
+	"version": "1.0.0",
+	"description": "PartyManager : Node.js server",
+	"keywords": [
+		"OpenShift",
+		"Node.js",
+		"application",
+		"socket.io"
+	],
+	"author": {
+		"name": "Graphmaxer",
+		"email": "m.lambotin@gmail.com",
+		"url": "http://partymanagerserver-graphmaxer.rhcloud.com/"
+	},
+	"homepage": "http://partymanagerserver-graphmaxer.rhcloud.com/",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Graphmaxer/partymanager-server"
+		},
+	"engines": {
+		"node": ">= 0.6.0",
+		"npm": ">= 1.0.0"
+	},
+	"dependencies": {
+		"express": "^4.13.4",
+		"socket.io": "~1.4.3"
+	},
+	"devDependencies": {},
+	"bundleDependencies": [],
+	"private": true,
+	"main": "server.js"
 }
