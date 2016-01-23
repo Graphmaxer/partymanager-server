@@ -1,43 +1,43 @@
-// Check the configuration file for more details
+var http    =	require('http');
+var fs      =	require('fs');
 var config = require('./config');
 
-// Express.js stuff
-var express = require('express');
-var app = require('express')();
-var server = require('http').Server(app);
-
-// Websockets with socket.io
-var io = require('socket.io')(server);
-
-console.log("Trying to start server with config:", config.serverip + ":" + config.serverport);
-
-// Both port and ip are needed for the OpenShift, otherwise it tries 
-// to bind server on IP 0.0.0.0 (or something) and fails
-server.listen(config.serverport, config.serverip, function() {
-  console.log("Server running @ http://" + config.serverip + ":" + config.serverport);
+// Creation du serveur
+var app = http.createServer(function (req, res) {
+	// On lit notre fichier app.html
+	fs.readFile('./index.html', 'utf-8', function(error, content) {
+		res.writeHead(200, {'Content-Type' : 'text/html'});
+		res.end(content);
+	});
 });
 
-// Allow some files to be server over HTTP
-app.use(express.static(__dirname + '/'));
+// Variables globales
+// Ces variables resteront durant toute la vie du seveur pour et sont commune pour chaque client (node server.js)
+// liste des messages de la forme { pseudo : 'Mon pseudo', message : 'Mon message' }
+var messages = [];
 
-// Serve GET on http://domain/
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
+//// SOCKET.IO ////
+
+var io	    =	require('socket.io');
+
+// Socket io ecoute maintenant notre application !
+io = io.listen(app); 
+
+// Quand une personne se connecte au serveur
+io.sockets.on('connection', function (socket) {
+	// On donne la liste des messages (evenement cree du cote client)
+	socket.emit('recupererMessages', messages);
+	// Quand on recoit un nouveau message
+	socket.on('nouveauMessage', function (mess) {
+		// On l'ajout au tableau (variable globale commune a tous les clients connectes au serveur)
+		messages.push(mess);
+		// On envoie a tout les clients connectes (sauf celui qui a appelle l'evenement) le nouveau message
+		socket.broadcast.emit('recupererNouveauMessage', mess);
+	});
 });
 
-// Server GET on http://domain/api/config
-// A hack to provide client the system config
-app.get('/api/config', function(req, res) {
-  res.send('var config = ' + JSON.stringify(config));
-});
+///////////////////
 
-// And finally some websocket stuff
-io.on('connection', function (socket) { // Incoming connections from clients
-  // Greet the newcomer
-  socket.emit('hello', { greeting: 'Hi socket ' + socket.id + ' this is Server speaking! Let\'s play ping-pong. You pass!' });
-
-  socket.on('ping', function (data) { // ping-event from the client to be respond with pong
-    console.log("received ping from client: ", data);
-    socket.emit('pong', { id: data.id });
-  });
-});
+// Notre application ecoute sur le port 8080
+app.listen(config.serverport, config.serverip);
+console.log('Live Chat App running at http://localhost:8080/');
