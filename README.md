@@ -1,4 +1,4 @@
-## PartyManager Node.js Server
+## PartyManager : Node.js Server
 
 This is the Node.js application for PartyManager.
 
