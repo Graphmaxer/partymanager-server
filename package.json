@@ -16,7 +16,7 @@
   "homepage": "http://partymanager-graphmaxer.rhcloud.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Graphmaxer/partymanager"
+    "url": "https://github.com/Graphmaxer/partymanager-server"
   },
 
   "engines": {
