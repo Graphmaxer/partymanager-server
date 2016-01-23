@@ -34,11 +34,18 @@
     <b>Message : </b><input type="text" name="message" id="message" style="width:250px;" /> <input type="submit" value="Envoyer" />
   </form>
   <script type="text/javascript">
+  var Client;
+  Client = function Client() {
+    if (instance) {
+      return instance;
+    }
+
+    instance = this;
   // On demande le pseudo de l'utilisateur
   var pseudo = prompt('Votre pseudo ?') || 'Utilisateur';
   
   // On se connecte au serveur
-  var socket = io.connect();
+  var socket = instance.connect();
   
   // On creer l'evenement recupererMessages pour recuperer direcement les messages sur serveur
   socket.on('recupererMessages', function (messages) {
