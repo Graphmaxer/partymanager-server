@@ -1,38 +1,33 @@
-var http = require('http');
-var fs = require('fs');
-var io = require('socket.io');
-var config = require('./config');	
+var http = require("http");
+var fs = require("fs");
+var io = require("socket.io");
+var config = require("./config");	
 
 // Creation du serveur
 var app = http.createServer(function (req, res) {
-	fs.readFile('./index.html', 'utf-8', function(error, content) {
-		res.writeHead(200, {'Content-Type' : 'text/html'});
+	fs.readFile("./index.html", "utf-8", function(error, content) {
+		res.writeHead(200, {"Content-Type" : "text/html"});
 		res.end(content);
 	});
 });
 
-// Variables globales
-// Ces variables resteront durant toute la vie du seveur pour et sont commune pour chaque client (node server.js)
-// liste des messages de la forme { pseudo : 'Mon pseudo', message : 'Mon message' }
-var messages = [];
+var lounges = [];
+var loungeNumber = 0;
 
-//// SOCKET.IO ////
-
-
-
-// Socket io ecoute maintenant notre application !
 io = io.listen(app); 
 
-// Quand une personne se connecte au serveur
-io.sockets.on('connection', function (socket) {
-	// On donne la liste des messages (evenement cree du cote client)
-	socket.emit('recupererMessages', messages);
-	// Quand on recoit un nouveau message
-	socket.on('nouveauMessage', function (mess) {
-		// On l'ajout au tableau (variable globale commune a tous les clients connectes au serveur)
-		messages.push(mess);
-		// On envoie a tout les clients connectes (sauf celui qui a appelle l'evenement) le nouveau message
-		socket.broadcast.emit('recupererNouveauMessage', mess);
+io.sockets.on("connection", function (socket) {
+	console.log("New client connected");
+
+	socket.emit("retrieveLounges", lounges);
+
+	socket.on("newLounge", function (loungeInfo) {
+		
+		lounges.push(loungeInfo);
+
+		console.log("New lounge created : Name : " + lounges[loungeNumber].loungeName + ", Password : " + lounges[loungeNumber].loungePassword + ", Description : " + lounges[loungeNumber].loungeDescription);
+
+		loungeNumber = loungeNumber + 1;
 	});
 });
 
@@ -40,4 +35,4 @@ io.sockets.on('connection', function (socket) {
 
 // Notre application ecoute sur le port 8080
 app.listen(config.serverport, config.serverip);
-console.log('Live Chat App running at http://localhost:8080/');
+console.log("Live Chat App running at http://localhost:8080/");
