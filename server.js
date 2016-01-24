@@ -1,10 +1,10 @@
 var http = require('http');
 var fs = require('fs');
+var io = require('socket.io');
 var config = require('./config');	
 
 // Creation du serveur
 var app = http.createServer(function (req, res) {
-	// On lit notre fichier app.html
 	fs.readFile('./index.html', 'utf-8', function(error, content) {
 		res.writeHead(200, {'Content-Type' : 'text/html'});
 		res.end(content);
@@ -18,7 +18,7 @@ var messages = [];
 
 //// SOCKET.IO ////
 
-var io = require('socket.io');
+
 
 // Socket io ecoute maintenant notre application !
 io = io.listen(app); 
