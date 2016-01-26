@@ -3,7 +3,6 @@ var fs = require("fs");
 var io = require("socket.io");
 var config = require("./config");	
 
-// Creation du serveur
 var app = http.createServer(function (req, res) {
 	fs.readFile("./index.html", "utf-8", function(error, content) {
 		res.writeHead(200, {"Content-Type" : "text/html"});
@@ -12,7 +11,10 @@ var app = http.createServer(function (req, res) {
 });
 
 var lounges = [];
-var loungeNumber = 0;
+lounges = [
+{"loungeName" : "Salon 1", "loungePassword" : "mdp1",  "loungeDescription" : "Coucou 1"}, 
+{"loungeName" : "Salon 2", "loungePassword" : "mdp2",  "loungeDescription" : "Pas de description"}, 
+{"loungeName" : "Salon 3", "loungePassword" : "mdp3",  "loungeDescription" : "Lorem ipsum dolor sit amet"}]
 
 io = io.listen(app); 
 
@@ -22,17 +24,33 @@ io.sockets.on("connection", function (socket) {
 	socket.emit("retrieveLounges", lounges);
 
 	socket.on("newLounge", function (loungeInfo) {
+		if (loungeInfo.loungeName == "") {
+			socket.emit("errorMessage", "Veuillez mettre un nom");
+			return false;
+		}
+		else if (loungeInfo.loungeName.length >= 25) {
+			socket.emit("errorMessage", "Veuillez mettre un nom inférieur à 25 caractères");
+			return false;
+		}
+		else if (loungeInfo.loungePassword == "") {
+			socket.emit("errorMessage", "Veuillez mettre un mot de passe");
+			return false;
+		}
+		else if (loungeInfo.loungePassword.length >= 100) {
+			socket.emit("errorMessage", "Veuillez mettre un mot de passe inférieur à 100 caractères");
+			return false;
+		}
+		else if (loungeInfo.loungeDescription.length >= 50) {
+			socket.emit("errorMessage", "Veuillez mettre une description inférieure à 50 caractères");
+			return false;
+		}
+
+		console.log("New lounge created : Name : " + loungeInfo.loungeName + ", Password : " + loungeInfo.loungePassword + ", Description : " + loungeInfo.loungeDescription);
 		
 		lounges.push(loungeInfo);
 
-		console.log("New lounge created : Name : " + lounges[loungeNumber].loungeName + ", Password : " + lounges[loungeNumber].loungePassword + ", Description : " + lounges[loungeNumber].loungeDescription);
-
-		loungeNumber = loungeNumber + 1;
+		socket.emit("retrieveNewLounge", loungeInfo);
 	});
 });
 
-///////////////////
-
-// Notre application ecoute sur le port 8080
 app.listen(config.serverport, config.serverip);
-console.log("Live Chat App running at http://localhost:8080/");
