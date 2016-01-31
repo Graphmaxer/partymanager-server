@@ -45,11 +45,15 @@ io.sockets.on("connection", function (socket) {
 			return false;
 		}
 
+		if (loungeInfo.loungeDescription == "") {
+			loungeInfo.loungeDescription = "Pas de description";
+		}
+
 		console.log("New lounge created : Name : " + loungeInfo.loungeName + ", Password : " + loungeInfo.loungePassword + ", Description : " + loungeInfo.loungeDescription);
 		
 		lounges.push(loungeInfo);
 
-		socket.emit("retrieveNewLounge", loungeInfo);
+		io.sockets.emit("retrieveNewLounge", loungeInfo);
 	});
 });
 
