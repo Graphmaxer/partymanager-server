@@ -1,7 +1,7 @@
 var http = require("http");
 var fs = require("fs");
 var io = require("socket.io");
-var config = require("./config");	
+var config = require("./config");
 
 var app = http.createServer(function (req, res) {
 	fs.readFile("./index.html", "utf-8", function(error, content) {
