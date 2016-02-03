@@ -16,12 +16,21 @@ lounges = [
 {"loungeName" : "Salon 2", "loungePassword" : "mdp2",  "loungeDescription" : "Pas de description"}, 
 {"loungeName" : "Salon 3", "loungePassword" : "mdp3",  "loungeDescription" : "Lorem ipsum dolor sit amet"}]
 
-io = io.listen(app); 
+var messages = [];
+
+io = io.listen(app);
 
 io.sockets.on("connection", function (socket) {
+
 	console.log("New client connected");
 
 	socket.emit("retrieveLounges", lounges);
+	socket.emit("retrieveMessages", messages);
+
+
+	/////////////////////
+	// LOUNGE CREATION //
+	/////////////////////
 
 	socket.on("newLounge", function (loungeInfo) {
 		if (loungeInfo.loungeName == "") {
@@ -55,6 +64,34 @@ io.sockets.on("connection", function (socket) {
 
 		io.sockets.emit("retrieveNewLounge", loungeInfo);
 		socket.emit("openLounge");
+	});
+
+
+	///////////
+	// TCHAT //
+	///////////
+
+	socket.on("newMessage", function (message) {
+		if (message.messageAuthor == "") {
+			socket.emit("errorMessage", "Veuillez mettre un nom");
+			return false;
+		}
+		else if (message.messageAuthor.length >= 15) {
+			socket.emit("errorMessage", "Veuillez mettre un nom inférieur à 15 caractères");
+			return false;
+		}
+		if (message.messageAuthor == "") {
+			socket.emit("errorMessage", "Veuillez mettre un message");
+			return false;
+		}
+		else if (message.messageContent.length >= 250) {
+			socket.emit("errorMessage", "Veuillez mettre un message inférieur à 250 caractères");
+			return false;
+		}
+		
+		messages.push(message);
+
+		io.sockets.emit("retrieveNewMessage", message);
 	});
 });
 
