@@ -54,6 +54,7 @@ io.sockets.on("connection", function (socket) {
 		lounges.push(loungeInfo);
 
 		io.sockets.emit("retrieveNewLounge", loungeInfo);
+		socket.emit("openLounge");
 	});
 });
 
