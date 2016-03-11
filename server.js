@@ -12,9 +12,14 @@ var app = http.createServer(function (req, res) {
 
 var lounges = [];
 lounges = [
-{"loungeName" : "Salon 1", "loungePassword" : "mdp1",  "loungeDescription" : "Coucou 1"}, 
-{"loungeName" : "Salon 2", "loungePassword" : "mdp2",  "loungeDescription" : "Pas de description"}, 
-{"loungeName" : "Salon 3", "loungePassword" : "mdp3",  "loungeDescription" : "Lorem ipsum dolor sit amet"}]
+{"loungeName" : "Salon 1", "loungePassword" : "mdp",  "loungeDescription" : "Coucou 1"}, 
+{"loungeName" : "Salon 2", "loungePassword" : "mdp",  "loungeDescription" : "Pas de description"}, 
+{"loungeName" : "Salon 3", "loungePassword" : "mdp",  "loungeDescription" : "Lorem ipsum dolor sit amet"}];
+
+var loungesWithoutPasswords = [];
+for (var i = 0; i < lounges.length; i++) {
+		loungesWithoutPasswords.push({"loungeName" : lounges[i].loungeName, "loungeDescription" : lounges[i].loungeDescription});
+	}
 
 var messages = [];
 
@@ -24,7 +29,7 @@ io.sockets.on("connection", function (socket) {
 
 	console.log("New client connected");
 
-	socket.emit("retrieveLounges", lounges);
+	socket.emit("retrieveLounges", loungesWithoutPasswords);
 	socket.emit("retrieveMessages", messages);
 
 
@@ -92,6 +97,17 @@ io.sockets.on("connection", function (socket) {
 		messages.push(message);
 
 		io.sockets.emit("retrieveNewMessage", message);
+	});
+
+
+	/////////////////
+	// OPEN LOUNGE //
+	/////////////////
+	
+	socket.on("openLoungeRequest", function (loungeNameAndPassword) {
+		console.log("Open request for : " + loungeNameAndPassword.loungeName);
+		
+		socket.emit("loungeOpened");
 	});
 });
 
