@@ -72,9 +72,9 @@ io.sockets.on("connection", function (socket) {
 	});
 
 
-	///////////
-	// TCHAT //
-	///////////
+	//////////
+	// CHAT //
+	//////////
 
 	socket.on("newMessage", function (message) {
 		if (message.messageAuthor == "") {
