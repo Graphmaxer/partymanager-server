@@ -12,7 +12,7 @@ var app = http.createServer(function (req, res) {
 
 var lounges = [];
 lounges = [
-{"loungeName" : "Salon 1", "loungePassword" : "mdp",  "loungeDescription" : "Coucou 1"}, 
+{"loungeName" : "Salon 1", "loungePassword" : "mdp",  "loungeDescription" : "Coucou 1", "messages" : ["test1", "test2"] },
 {"loungeName" : "Salon 2", "loungePassword" : "mdp",  "loungeDescription" : "Pas de description"}, 
 {"loungeName" : "Salon 3", "loungePassword" : "mdp",  "loungeDescription" : "Lorem ipsum dolor sit amet"}];
 
@@ -21,8 +21,6 @@ for (var i = 0; i < lounges.length; i++) {
 		loungesWithoutPasswords.push({"loungeName" : lounges[i].loungeName, "loungeDescription" : lounges[i].loungeDescription});
 	}
 
-var messages = [];
-
 io = io.listen(app);
 
 io.sockets.on("connection", function (socket) {
@@ -30,7 +28,6 @@ io.sockets.on("connection", function (socket) {
 	console.log("New client connected");
 
 	socket.emit("retrieveLounges", loungesWithoutPasswords);
-	socket.emit("retrieveMessages", messages);
 
 
 	/////////////////////
@@ -106,8 +103,28 @@ io.sockets.on("connection", function (socket) {
 	
 	socket.on("openLoungeRequest", function (loungeNameAndPassword) {
 		console.log("Open request for : " + loungeNameAndPassword.loungeName);
-		
+		console.log("Password : " + loungeNameAndPassword.loungePassword);
+
+		var loungeNameRequested = loungeNameAndPassword.loungeName;
+		var loungeNameOriginal;
+
+		for (var i = 0; i < lounges.length; i++) {
+			loungeNameOriginal = lounges[i].loungeName;
+			console.log(loungeNameOriginal + " " + loungeNameRequested);
+			if (loungeNameOriginal == loungeNameRequested) {
+				var loungeIdRequested = i;
+				console.log("id" + loungeIdRequested);
+			}
+		}
+
+		if(loungeNameAndPassword.loungePassword != lounges[loungeIdRequested].loungePassword) {
+			socket.emit("errorMessage", "Mauvais mot de passe");
+			return false;
+		}
+
+
 		socket.emit("loungeOpened");
+		socket.emit("retrieveMessages", lounges[loungeIdRequested].messages);
 	});
 });
 
