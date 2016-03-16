@@ -110,10 +110,10 @@ io.sockets.on("connection", function (socket) {
 
 		for (var i = 0; i < lounges.length; i++) {
 			loungeNameOriginal = lounges[i].loungeName;
-			console.log(loungeNameOriginal + " " + loungeNameRequested);
+			console.log("'" + loungeNameOriginal + "' '" + loungeNameRequested + "'");
 			if (loungeNameOriginal == loungeNameRequested) {
 				var loungeIdRequested = i;
-				console.log("id" + loungeIdRequested);
+				console.log("id : " + loungeIdRequested);
 			}
 		}
 
