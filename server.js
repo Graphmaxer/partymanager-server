@@ -65,6 +65,13 @@ io.sockets.on("connection", function(socket) {
         io.sockets.emit("retrieveNewLounge", loungeInfo);
         socket.emit("openLounge");
     });
+    
+    
+    //////////////////
+    // USER LISTING //
+    //////////////////
+
+    
 
 
     //////////
@@ -143,6 +150,7 @@ io.sockets.on("connection", function(socket) {
         if (debugMode) { console.log("Request accepted"); }
         socket.emit("loungeOpened");
         socket.emit("retrieveMessages", lounges[loungeIndex].messages);
+        io.sockets.emit("retrieveUsers", lounges[loungeIndex].users);
     });
 
 
@@ -163,6 +171,7 @@ io.sockets.on("connection", function(socket) {
     	if (typeof lounges[loungeIndex] == "undefined") { return false; }
 
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
+        socket.broadcast.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
         lounges[loungeIndex].users.splice(userIndex, 1);
         //console.log(JSON.stringify(lounges, null, 4));
     });
@@ -178,6 +187,7 @@ io.sockets.on("connection", function(socket) {
     	}
     	
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
+        socket.broadcast.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
         lounges[loungeIndex].users.splice(userIndex, 1);
     });
 });
