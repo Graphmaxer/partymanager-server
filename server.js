@@ -171,7 +171,7 @@ io.sockets.on("connection", function(socket) {
     	if (typeof lounges[loungeIndex] == "undefined") { return false; }
 
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
-        socket.broadcast.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
+        io.sockets.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
         lounges[loungeIndex].users.splice(userIndex, 1);
         //console.log(JSON.stringify(lounges, null, 4));
     });
@@ -187,7 +187,7 @@ io.sockets.on("connection", function(socket) {
     	}
     	
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
-        socket.broadcast.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
+        io.sockets.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
         lounges[loungeIndex].users.splice(userIndex, 1);
     });
 });
