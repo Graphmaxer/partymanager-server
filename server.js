@@ -150,7 +150,8 @@ io.sockets.on("connection", function(socket) {
         if (debugMode) { console.log("Request accepted"); }
         socket.emit("loungeOpened");
         socket.emit("retrieveMessages", lounges[loungeIndex].messages);
-        io.sockets.emit("retrieveUsers", lounges[loungeIndex].users);
+        socket.emit("retrieveUsers", lounges[loungeIndex].users);
+        socket.broadcast.emit("retrieveNewUser", loungeConnectionInfo.userName);
     });
 
 
