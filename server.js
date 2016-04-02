@@ -19,15 +19,15 @@ lounges = [
     { "loungeName": "Salon 3", "loungePassword": "mdp", "loungeDescription": "Lorem ipsum", "messages": [], "users": [] }
 ];
 
-var loungesWithoutPasswords = [];
-for (var i = 0; i < lounges.length; i++) {
-    loungesWithoutPasswords.push({ "loungeName": lounges[i].loungeName, "loungeDescription": lounges[i].loungeDescription });
-}
-
 io = io.listen(app);
 
 io.sockets.on("connection", function(socket) {
     if (debugMode) { console.log("New client connected with sessionId : " + socket.id); }
+
+    var loungesWithoutPasswords = [];
+	for (var i = 0; i < lounges.length; i++) {
+    	loungesWithoutPasswords.push({ "loungeName": lounges[i].loungeName, "loungeDescription": lounges[i].loungeDescription });
+	}
 
     socket.emit("retrieveLounges", loungesWithoutPasswords);
 
@@ -54,25 +54,26 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
+        for (var i = 0; i < lounges.length; i++) {
+
+            if (loungeInfo.loungeName == lounges[i].loungeName) {
+                socket.emit("errorMessage", "Ce nom de salon est déjà utlisé");
+            	return false;
+            }
+        }
+
         if (loungeInfo.loungeDescription == "") {
             loungeInfo.loungeDescription = "Pas de description";
         }
 
         if (debugMode) { console.log("New lounge created : Name : " + loungeInfo.loungeName + ", Password : " + loungeInfo.loungePassword + ", Description : " + loungeInfo.loungeDescription); }
 
-        lounges.push({ "loungeName": loungeInfo.loungeName, "loungePassword": loungeInfo.loungePassword, "loungeDescription": loungeInfo.loungeDescription, "messages": [] });
+        lounges.push({ "loungeName": loungeInfo.loungeName, "loungePassword": loungeInfo.loungePassword, "loungeDescription": loungeInfo.loungeDescription, "messages": [], "users": [] });
 
-        io.sockets.emit("retrieveNewLounge", loungeInfo);
-        socket.emit("openLounge");
+        io.sockets.emit("retrieveNewLounge", { "loungeName": loungeInfo.loungeName, "loungeDescription": loungeInfo.loungeDescription } );
+        socket.emit("openLoungeHosting");
     });
     
-    
-    //////////////////
-    // USER LISTING //
-    //////////////////
-
-    
-
 
     //////////
     // CHAT //
@@ -102,11 +103,11 @@ io.sockets.on("connection", function(socket) {
     });
 
 
-    /////////////////
-    // OPEN LOUNGE //
-    /////////////////
+    ////////////////////////
+    // OPEN LOUNGE VOTING //
+    ////////////////////////
 
-    socket.on("openLoungeRequest", function(loungeConnectionInfo) {
+    socket.on("openLoungeVotingRequest", function(loungeConnectionInfo) {
         if (debugMode) { console.log("Open request for : " + loungeConnectionInfo.loungeName + " with password : " + loungeConnectionInfo.loungePassword + " with name : " + loungeConnectionInfo.userName); }
 
         if (loungeConnectionInfo.loungePassword == "") {
@@ -148,7 +149,7 @@ io.sockets.on("connection", function(socket) {
         lounges[loungeIndex].users.push({ "userName": loungeConnectionInfo.userName, "userSessionId": socket.id });
 
         if (debugMode) { console.log("Request accepted"); }
-        socket.emit("loungeOpened");
+        socket.emit("loungeVotingOpened");
         socket.emit("retrieveMessages", lounges[loungeIndex].messages);
         socket.emit("retrieveUsers", lounges[loungeIndex].users);
         socket.broadcast.emit("retrieveNewUser", loungeConnectionInfo.userName);
@@ -169,7 +170,10 @@ io.sockets.on("connection", function(socket) {
     		}
     	}
     	
-    	if (typeof lounges[loungeIndex] == "undefined") { return false; }
+    	if (typeof lounges[loungeIndex] == "undefined") {
+    		if (debugMode) { console.log("Unknow user disconnected"); }
+    		return false;
+    	}
 
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
         io.sockets.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
