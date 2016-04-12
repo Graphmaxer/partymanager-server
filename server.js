@@ -68,7 +68,8 @@ io.sockets.on("connection", function(socket) {
 
         if (debugMode) { console.log("New lounge created : Name : " + loungeInfo.loungeName + ", Password : " + loungeInfo.loungePassword + ", Description : " + loungeInfo.loungeDescription); }
 
-        lounges.push({ "loungeName": loungeInfo.loungeName, "loungePassword": loungeInfo.loungePassword, "loungeDescription": loungeInfo.loungeDescription, "messages": [], "users": [] });
+        lounges.push({ "loungeName": loungeInfo.loungeName, "loungePassword": loungeInfo.loungePassword, "loungeDescription": loungeInfo.loungeDescription, "messages": [], "users": [{ "userName": "Hôte", "userSessionId": socket.id, "isHost": true }] });
+        socket.join(loungeInfo.loungeName);
 
         io.sockets.emit("retrieveNewLounge", { "loungeName": loungeInfo.loungeName, "loungeDescription": loungeInfo.loungeDescription } );
         socket.emit("openLoungeHosting");
@@ -82,6 +83,7 @@ io.sockets.on("connection", function(socket) {
     socket.on("newMessage", function(message) {
         if (message == "") {
             socket.emit("errorMessage", "Veuillez mettre un message");
+            console.log(message);
             return false;
         } else if (message.length >= 250) {
             socket.emit("errorMessage", "Veuillez mettre un message inférieur à 250 caractères");
@@ -99,7 +101,16 @@ io.sockets.on("connection", function(socket) {
 
         lounges[loungeIndex].messages.push({ "messageAuthor": lounges[loungeIndex].users[userIndex].userName, "messageContent": message });
 
-        io.sockets.emit("retrieveNewMessage", { "messageAuthor": lounges[loungeIndex].users[userIndex].userName, "messageContent": message });
+        var isHost;
+
+        if (typeof lounges[loungeIndex].users[userIndex].isHost === "undefined") {
+        	isHost = false;
+        }
+        else if (lounges[loungeIndex].users[userIndex].isHost === true) {
+        	isHost = true;
+        }
+        
+        io.to(lounges[loungeIndex].loungeName).emit("retrieveNewMessage", { "messageAuthor": lounges[loungeIndex].users[userIndex].userName, "messageContent": message, "isHost": isHost });
     });
 
 
@@ -119,7 +130,8 @@ io.sockets.on("connection", function(socket) {
         if (loungeConnectionInfo.userName == "") {
             socket.emit("errorMessage", "Veuillez mettre un nom");
             return false;
-        } else if (loungeConnectionInfo.userName.length >= 15) {
+        }
+        else if (loungeConnectionInfo.userName.length >= 15) {
             socket.emit("errorMessage", "Veuillez mettre un nom inférieur à 15 caractères");
             return false;
         }
@@ -147,12 +159,13 @@ io.sockets.on("connection", function(socket) {
         }
 
         lounges[loungeIndex].users.push({ "userName": loungeConnectionInfo.userName, "userSessionId": socket.id });
+        socket.join(lounges[loungeIndex].loungeName);
 
         if (debugMode) { console.log("Request accepted"); }
         socket.emit("loungeVotingOpened");
         socket.emit("retrieveMessages", lounges[loungeIndex].messages);
         socket.emit("retrieveUsers", lounges[loungeIndex].users);
-        socket.broadcast.emit("retrieveNewUser", loungeConnectionInfo.userName);
+        socket.broadcast.to(lounges[loungeIndex].loungeName).emit("retrieveNewUser", loungeConnectionInfo.userName);
     });
 
 
@@ -176,7 +189,7 @@ io.sockets.on("connection", function(socket) {
     	}
 
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
-        io.sockets.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
+        socket.broadcast.to(lounges[loungeIndex].loungeName).emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
         lounges[loungeIndex].users.splice(userIndex, 1);
         //console.log(JSON.stringify(lounges, null, 4));
     });
@@ -192,7 +205,7 @@ io.sockets.on("connection", function(socket) {
     	}
     	
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
-        io.sockets.emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
+        socket.broadcast.to(lounges[loungeIndex].loungeName).emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
         lounges[loungeIndex].users.splice(userIndex, 1);
     });
 });
