@@ -25,9 +25,9 @@ io.sockets.on("connection", function(socket) {
     if (debugMode) { console.log("New client connected with sessionId : " + socket.id); }
 
     var loungesWithoutPasswords = [];
-	for (var i = 0; i < lounges.length; i++) {
-    	loungesWithoutPasswords.push({ "loungeName": lounges[i].loungeName, "loungeDescription": lounges[i].loungeDescription });
-	}
+    for (var i = 0; i < lounges.length; i++) {
+        loungesWithoutPasswords.push({ "loungeName": lounges[i].loungeName, "loungeDescription": lounges[i].loungeDescription });
+    }
 
     socket.emit("retrieveLounges", loungesWithoutPasswords);
 
@@ -38,9 +38,15 @@ io.sockets.on("connection", function(socket) {
 
     socket.on("newLounge", function(loungeInfo) {
         if (loungeInfo.loungeName == "") {
-            socket.emit("errorMessage", "Veuillez mettre un nom");
+            socket.emit("errorMessage", "Veuillez mettre un nom de salon");
             return false;
         } else if (loungeInfo.loungeName.length >= 25) {
+            socket.emit("errorMessage", "Veuillez mettre un nom de salon inférieur à 25 caractères");
+            return false;
+        } else if (loungeInfo.hostName == "") {
+            socket.emit("errorMessage", "Veuillez mettre un nom");
+            return false;
+        } else if (loungeInfo.hostName.length >= 25) {
             socket.emit("errorMessage", "Veuillez mettre un nom inférieur à 25 caractères");
             return false;
         } else if (loungeInfo.loungePassword == "") {
@@ -58,7 +64,7 @@ io.sockets.on("connection", function(socket) {
 
             if (loungeInfo.loungeName == lounges[i].loungeName) {
                 socket.emit("errorMessage", "Ce nom de salon est déjà utlisé");
-            	return false;
+                return false;
             }
         }
 
@@ -66,15 +72,15 @@ io.sockets.on("connection", function(socket) {
             loungeInfo.loungeDescription = "Pas de description";
         }
 
-        if (debugMode) { console.log("New lounge created : Name : " + loungeInfo.loungeName + ", Password : " + loungeInfo.loungePassword + ", Description : " + loungeInfo.loungeDescription); }
+        if (debugMode) { console.log("New lounge created : Name : " + loungeInfo.loungeName + ", Host Name : " + loungeInfo.hostName + " Password : " + loungeInfo.loungePassword + ", Description : " + loungeInfo.loungeDescription); }
 
-        lounges.push({ "loungeName": loungeInfo.loungeName, "loungePassword": loungeInfo.loungePassword, "loungeDescription": loungeInfo.loungeDescription, "messages": [], "users": [{ "userName": "Hôte", "userSessionId": socket.id, "isHost": true }] });
+        lounges.push({ "loungeName": loungeInfo.loungeName, "loungePassword": loungeInfo.loungePassword, "loungeDescription": loungeInfo.loungeDescription, "messages": [], "users": [{ "userName": loungeInfo.hostName, "userSessionId": socket.id, "isHost": true }] });
         socket.join(loungeInfo.loungeName);
 
-        io.sockets.emit("retrieveNewLounge", { "loungeName": loungeInfo.loungeName, "loungeDescription": loungeInfo.loungeDescription } );
+        io.sockets.emit("retrieveNewLounge", { "loungeName": loungeInfo.loungeName, "loungeDescription": loungeInfo.loungeDescription });
         socket.emit("openLoungeHosting");
     });
-    
+
 
     //////////
     // CHAT //
@@ -91,25 +97,24 @@ io.sockets.on("connection", function(socket) {
         }
 
         for (var i = 0; i < lounges.length; i++) {
-    		for (var j = 0; j < lounges[i].users.length; j++) {
-    			if (socket.id == lounges[i].users[j].userSessionId) {
-    				var loungeIndex = i;
-    				var userIndex = j;
-    			}
-    		}
-    	}
+            for (var j = 0; j < lounges[i].users.length; j++) {
+                if (socket.id == lounges[i].users[j].userSessionId) {
+                    var loungeIndex = i;
+                    var userIndex = j;
+                }
+            }
+        }
 
         lounges[loungeIndex].messages.push({ "messageAuthor": lounges[loungeIndex].users[userIndex].userName, "messageContent": message });
 
         var isHost;
 
         if (typeof lounges[loungeIndex].users[userIndex].isHost === "undefined") {
-        	isHost = false;
+            isHost = false;
+        } else if (lounges[loungeIndex].users[userIndex].isHost === true) {
+            isHost = true;
         }
-        else if (lounges[loungeIndex].users[userIndex].isHost === true) {
-        	isHost = true;
-        }
-        
+
         io.to(lounges[loungeIndex].loungeName).emit("retrieveNewMessage", { "messageAuthor": lounges[loungeIndex].users[userIndex].userName, "messageContent": message, "isHost": isHost });
     });
 
@@ -130,9 +135,8 @@ io.sockets.on("connection", function(socket) {
         if (loungeConnectionInfo.userName == "") {
             socket.emit("errorMessage", "Veuillez mettre un nom");
             return false;
-        }
-        else if (loungeConnectionInfo.userName.length >= 15) {
-            socket.emit("errorMessage", "Veuillez mettre un nom inférieur à 15 caractères");
+        } else if (loungeConnectionInfo.userName.length >= 25) {
+            socket.emit("errorMessage", "Veuillez mettre un nom inférieur à 25 caractères");
             return false;
         }
 
@@ -174,36 +178,36 @@ io.sockets.on("connection", function(socket) {
     ///////////////////
 
     socket.on("disconnect", function() {
-    	for (var i = 0; i < lounges.length; i++) {
-    		for (var j = 0; j < lounges[i].users.length; j++) {
-    			if (socket.id == lounges[i].users[j].userSessionId) {
-    				var loungeIndex = i;
-    				var userIndex = j;
-    			}
-    		}
-    	}
-    	
-    	if (typeof lounges[loungeIndex] == "undefined") {
-    		if (debugMode) { console.log("Unknow user disconnected"); }
-    		return false;
-    	}
+        for (var i = 0; i < lounges.length; i++) {
+            for (var j = 0; j < lounges[i].users.length; j++) {
+                if (socket.id == lounges[i].users[j].userSessionId) {
+                    var loungeIndex = i;
+                    var userIndex = j;
+                }
+            }
+        }
+
+        if (typeof lounges[loungeIndex] == "undefined") {
+            if (debugMode) { console.log("Unknow user disconnected"); }
+            return false;
+        }
 
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
         socket.broadcast.to(lounges[loungeIndex].loungeName).emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
         lounges[loungeIndex].users.splice(userIndex, 1);
         //console.log(JSON.stringify(lounges, null, 4));
     });
-    
+
     socket.on("userDisconnection", function() {
-    	for (var i = 0; i < lounges.length; i++) {
-    		for (var j = 0; j < lounges[i].users.length; j++) {
-    			if (socket.id == lounges[i].users[j].userSessionId) {
-    				var loungeIndex = i;
-    				var userIndex = j;
-    			}
-    		}
-    	}
-    	
+        for (var i = 0; i < lounges.length; i++) {
+            for (var j = 0; j < lounges[i].users.length; j++) {
+                if (socket.id == lounges[i].users[j].userSessionId) {
+                    var loungeIndex = i;
+                    var userIndex = j;
+                }
+            }
+        }
+
         if (debugMode) { console.log("User disconnected : " + lounges[loungeIndex].users[userIndex].userName); }
         socket.broadcast.to(lounges[loungeIndex].loungeName).emit("userListDisconnection", lounges[loungeIndex].users[userIndex].userName);
         lounges[loungeIndex].users.splice(userIndex, 1);
