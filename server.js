@@ -105,8 +105,6 @@ io.sockets.on("connection", function(socket) {
             }
         }
 
-        lounges[loungeIndex].messages.push({ "messageAuthor": lounges[loungeIndex].users[userIndex].userName, "messageContent": message });
-
         var isHost;
 
         if (typeof lounges[loungeIndex].users[userIndex].isHost === "undefined") {
@@ -114,7 +112,8 @@ io.sockets.on("connection", function(socket) {
         } else if (lounges[loungeIndex].users[userIndex].isHost === true) {
             isHost = true;
         }
-
+        
+        lounges[loungeIndex].messages.push({ "messageAuthor": lounges[loungeIndex].users[userIndex].userName, "messageContent": message, "isHost": isHost });
         io.to(lounges[loungeIndex].loungeName).emit("retrieveNewMessage", { "messageAuthor": lounges[loungeIndex].users[userIndex].userName, "messageContent": message, "isHost": isHost });
     });
 
