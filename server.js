@@ -1,4 +1,5 @@
 var debugMode = true;
+var resumeSessionMode = false;
 
 var http = require("http");
 var https = require("https");
@@ -183,44 +184,53 @@ io.sockets.on("connection", function(socket) {
         }
 
         for (var k = 0; k < lounges[loungeIndex].users.length; k++) {
-
             if (loungeConnectionInfo.userName == lounges[loungeIndex].users[k].userName) {
                 socket.emit("errorMessage", "Un utilisateur est d&eacute;j&agrave; connect&eacute; avec ce nom");
                 return false;
             }
-        }
 
-        for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
-        	if (loungeConnectionInfo.userName == disconnectedUsersWaiting[i].userName && loungeConnectionInfo.loungeName == disconnectedUsersWaiting[i].lounge) {
-        		socket.emit("errorMessage", "Un utilisateur s'est déjà connecté avec ce pseudo dans ce salon");
-        		return false;
-        		
-        	}
+            if (resumeSessionMode) {
+            	if (loungeConnectionInfo.clientIdCookies[loungeConnectionInfo.loungeName] == lounges[loungeIndex].users[k].userSessionId) {
+            		socket.emit("errorMessage", "Veuillez patientez pour la reprise de votre session");
+                	return false;
+            	}
+            }
         }
 
         var resumeSession = false;
 
-        for (var propName in loungeConnectionInfo.clientIdCookies) {       	
-        	if (propName == loungeConnectionInfo.loungeName) {
-        		var requestedLoungeNameForResume = propName;
+        if (resumeSessionMode) {
+        	for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
+        		if (loungeConnectionInfo.userName == disconnectedUsersWaiting[i].userName && loungeConnectionInfo.loungeName == disconnectedUsersWaiting[i].lounge) {
+        			socket.emit("errorMessage", "Un utilisateur s'est déjà connecté avec ce pseudo dans ce salon");
+        			return false;
+        		
+        		}
         	}
-        }
+        
 
-       	for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
-       		if (disconnectedUsersWaiting[i].userSessionId == "/#" + loungeConnectionInfo.clientIdCookies[requestedLoungeNameForResume] && disconnectedUsersWaiting[i].lounge == loungeConnectionInfo.loungeName && requestedLoungeNameForResume == loungeConnectionInfo.loungeName) {
+	        for (var propName in loungeConnectionInfo.clientIdCookies) {       	
+	        	if (propName == loungeConnectionInfo.loungeName) {
+	        		var requestedLoungeNameForResume = propName;
+	        	}
+	        }
 
-       			if (disconnectedUsersWaiting[i].lounge != loungeConnectionInfo.loungeName) {
-       				break;
-       			}
-       			
-       			resumeSession = true;
+	       	for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
+	       		if (disconnectedUsersWaiting[i].userSessionId == "/#" + loungeConnectionInfo.clientIdCookies[requestedLoungeNameForResume] && disconnectedUsersWaiting[i].lounge == loungeConnectionInfo.loungeName && requestedLoungeNameForResume == loungeConnectionInfo.loungeName) {
 
-       			lounges[loungeIndex].users.push({ "userName": disconnectedUsersWaiting[i].userName, "userSessionId": socket.id, "likedMusic": disconnectedUsersWaiting[i].likedMusic, "dislikedMusic": disconnectedUsersWaiting[i].dislikedMusic });
-       			socket.join(disconnectedUsersWaiting[i].userName);		
-       			socket.emit("resumeSession", disconnectedUsersWaiting[i].userName);
-       			disconnectedUsersWaiting.splice(i, 1);
-       		}
-       	}
+	       			if (disconnectedUsersWaiting[i].lounge != loungeConnectionInfo.loungeName) {
+	       				break;
+	       			}
+	       			
+	       			resumeSession = true;
+
+	       			lounges[loungeIndex].users.push({ "userName": disconnectedUsersWaiting[i].userName, "userSessionId": socket.id, "likedMusic": disconnectedUsersWaiting[i].likedMusic, "dislikedMusic": disconnectedUsersWaiting[i].dislikedMusic });
+	       			socket.join(disconnectedUsersWaiting[i].userName);		
+	       			socket.emit("resumeSession", disconnectedUsersWaiting[i].userName);
+	       			disconnectedUsersWaiting.splice(i, 1);
+	       		}
+	       	}
+	    }
 
        	if (resumeSession == false) {
        		lounges[loungeIndex].users.push({ "userName": loungeConnectionInfo.userName, "userSessionId": socket.id, "likedMusic": [], "dislikedMusic": [] });
