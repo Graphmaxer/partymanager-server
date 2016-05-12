@@ -191,11 +191,10 @@ io.sockets.on("connection", function(socket) {
         }
 
         for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
-        	if (loungeConnectionInfo.userName == disconnectedUsersWaiting[i].userName) {
-        		if (!debugMode) {
-        			socket.emit("errorMessage", "Un utilisateur s'est déjà connecté avec ce pseudo dans ce salon");
-        			return false;
-        		}
+        	if (loungeConnectionInfo.userName == disconnectedUsersWaiting[i].userName && loungeConnectionInfo.loungeName == disconnectedUsersWaiting[i].lounge) {
+        		socket.emit("errorMessage", "Un utilisateur s'est déjà connecté avec ce pseudo dans ce salon");
+        		return false;
+        		
         	}
         }
 
