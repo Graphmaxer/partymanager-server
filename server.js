@@ -20,9 +20,12 @@ var app = http.createServer(function(req, res) {
 var disconnectedUsersWaiting = [];
 
 var lounges = [];
-lounges = [{ "loungeName": "Debug", "loungePassword": "mdp", "loungeDescription": "Debug", "messages": [], "users": [{ "userName": "Debug", "userSessionId": "", "isHost": true }], "music": [] },
-    { "loungeName": "Debug2", "loungePassword": "mdp", "loungeDescription": "Debug2", "messages": [], "users": [{ "userName": "Debug", "userSessionId": "", "isHost": true }], "music": [] }
-];
+
+if (debugMode) {
+    lounges = [{ "loungeName": "Debug", "loungePassword": "mdp", "loungeDescription": "Debug", "messages": [], "users": [{ "userName": "Debug", "userSessionId": "", "isHost": true }], "music": [] },
+        { "loungeName": "Debug2", "loungePassword": "mdp", "loungeDescription": "Debug2", "messages": [], "users": [{ "userName": "Debug", "userSessionId": "", "isHost": true }], "music": [] }
+    ];
+}
 
 io = io.listen(app);
 
@@ -49,7 +52,7 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
-        if (/^[a-zA-Z0-9\u00C0-\u017F ]+$/.test(loungeInfo.loungeName)) {} else {
+        if (/^[a-zA-Z0-9\u00C0-\u017F?! ]+$/.test(loungeInfo.loungeName)) {} else {
             socket.emit("errorMessage", "Vous pouvez seulement mettre un nom de salon avec des lettres, des chiffres et des espaces");
             return false;
         }
@@ -63,7 +66,7 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
-        if (/^[a-zA-Z0-9\u00C0-\u017F]+$/.test(loungeInfo.hostName)) {} else {
+        if (/^[a-zA-Z0-9\u00C0-\u017F?!]+$/.test(loungeInfo.hostName)) {} else {
             socket.emit("errorMessage", "Vous pouvez seulement mettre un nom avec des lettres et des chiffres");
             return false;
         }
@@ -80,7 +83,7 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
-        if (/^[a-zA-Z0-9\u00C0-\u017F ]*$/.test(loungeInfo.loungeDescription)) {} else {
+        if (/^[a-zA-Z0-9\u00C0-\u017F?! ]*$/.test(loungeInfo.loungeDescription)) {} else {
             socket.emit("errorMessage", "Vous pouvez seulement mettre une description avec des lettres, des chiffres et des espaces");
             return false;
         }
@@ -123,7 +126,7 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
-        if (/^[a-zA-Z0-9\u00C0-\u017F ]+$/.test(message)) {} else {
+        if (/^[a-zA-Z0-9\u00C0-\u017F?! ]+$/.test(message)) {} else {
             socket.emit("errorMessage", "Vous pouvez seulement mettre un message avec des lettres, des chiffres et des espaces");
             return false;
         }
@@ -135,6 +138,11 @@ io.sockets.on("connection", function(socket) {
                     var userIndex = j;
                 }
             }
+        }
+
+        if (loungeIndex === undefined || userIndex === undefined) {
+            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+            return false;
         }
 
         var isHost;
@@ -168,7 +176,7 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
-        if (/^[a-zA-Z0-9\u00C0-\u017F]+$/.test(loungeConnectionInfo.userName)) {} else {
+        if (/^[a-zA-Z0-9\u00C0-\u017F?!]+$/.test(loungeConnectionInfo.userName)) {} else {
             socket.emit("errorMessage", "Vous pouvez seulement mettre un nom avec des lettres et des chiffres");
             return false;
         }
@@ -203,22 +211,13 @@ io.sockets.on("connection", function(socket) {
 
         if (resumeSessionMode) {
             for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
-                if (loungeConnectionInfo.userName == disconnectedUsersWaiting[i].userName && loungeConnectionInfo.loungeName == disconnectedUsersWaiting[i].lounge) {
+                if (loungeConnectionInfo.userName == disconnectedUsersWaiting[i].userName && loungeConnectionInfo.loungeName == disconnectedUsersWaiting[i].lounge && disconnectedUsersWaiting[i].userSessionId != "/#" + loungeConnectionInfo.clientIdCookies[loungeConnectionInfo.loungeName]) {
                     socket.emit("errorMessage", "Un utilisateur s'est déjà connecté avec ce pseudo dans ce salon");
                     return false;
 
                 }
-            }
 
-
-            for (var propName in loungeConnectionInfo.clientIdCookies) {
-                if (propName == loungeConnectionInfo.loungeName) {
-                    var requestedLoungeNameForResume = propName;
-                }
-            }
-
-            for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
-                if (disconnectedUsersWaiting[i].userSessionId == "/#" + loungeConnectionInfo.clientIdCookies[requestedLoungeNameForResume] && disconnectedUsersWaiting[i].lounge == loungeConnectionInfo.loungeName && requestedLoungeNameForResume == loungeConnectionInfo.loungeName) {
+                if (disconnectedUsersWaiting[i].userSessionId == "/#" + loungeConnectionInfo.clientIdCookies[loungeConnectionInfo.loungeName] && disconnectedUsersWaiting[i].lounge == loungeConnectionInfo.loungeName) {
 
                     if (disconnectedUsersWaiting[i].lounge != loungeConnectionInfo.loungeName) {
                         break;
@@ -227,7 +226,7 @@ io.sockets.on("connection", function(socket) {
                     resumeSession = true;
 
                     lounges[loungeIndex].users.push({ "userName": disconnectedUsersWaiting[i].userName, "userSessionId": socket.id, "likedMusic": disconnectedUsersWaiting[i].likedMusic, "dislikedMusic": disconnectedUsersWaiting[i].dislikedMusic });
-                    socket.join(disconnectedUsersWaiting[i].userName);
+                    socket.join(disconnectedUsersWaiting[i].lounge);
                     socket.emit("resumeSession", disconnectedUsersWaiting[i].userName);
                     disconnectedUsersWaiting.splice(i, 1);
                 }
@@ -246,6 +245,11 @@ io.sockets.on("connection", function(socket) {
                     var userIndex = j;
                 }
             }
+        }
+
+        if (loungeIndex === undefined || userIndex === undefined) {
+            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+            return false;
         }
 
         var usersWithoutId = [];
@@ -329,6 +333,11 @@ io.sockets.on("connection", function(socket) {
                             }
                         }
 
+                        if (loungeIndex === undefined || userIndex === undefined) {
+                            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+                            return false;
+                        }
+
                         for (var j = 0; j < lounges[loungeIndex].music.length; j++) {
                             if (lounges[loungeIndex].music[j].videoId == videoId) {
                                 socket.emit("errorMessage", "Cette musique est déja dans la playlist du salon");
@@ -341,7 +350,7 @@ io.sockets.on("connection", function(socket) {
 
                         lounges[loungeIndex].users[userIndex].likedMusic.push(videoId);
                         socket.emit("retrieveNewLikedMusic", videoId);
-                        io.to(lounges[loungeIndex].loungeName).emit("addScore", videoId);
+                        io.to(lounges[loungeIndex].loungeName).emit("addScore", { "videoId": videoId, "scoreToAdd": 1 });
                     });
                 });
             });
@@ -358,6 +367,11 @@ io.sockets.on("connection", function(socket) {
             }
         }
 
+        if (loungeIndex === undefined || userIndex === undefined) {
+            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+            return false;
+        }
+
         var musicFound = false;
         for (var i = 0; i < lounges[loungeIndex].music.length; i++) {
             if (lounges[loungeIndex].music[i].videoId == videoId) {
@@ -376,14 +390,24 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
+        var alreadyVoted = false;
         if (lounges[loungeIndex].users[userIndex].dislikedMusic.indexOf(videoId) != -1) {
             lounges[loungeIndex].users[userIndex].dislikedMusic.splice(lounges[loungeIndex].users[userIndex].dislikedMusic.indexOf(videoId), 1);
+            alreadyVoted = true;
         }
 
-        lounges[loungeIndex].music[musicIndex].score++;
+        var scoreToAdd;
+        if (alreadyVoted) {
+            lounges[loungeIndex].music[musicIndex].score += 2;
+            scoreToAdd = 2;
+        } else {
+            lounges[loungeIndex].music[musicIndex].score++;
+            scoreToAdd = 1;
+        }
+
         lounges[loungeIndex].users[userIndex].likedMusic.push(videoId);
         socket.emit("retrieveNewLikedMusic", videoId);
-        io.to(lounges[loungeIndex].loungeName).emit("addScore", videoId);
+        io.to(lounges[loungeIndex].loungeName).emit("addScore", { "videoId": videoId, "scoreToAdd": scoreToAdd });
     });
 
     socket.on("downVote", function(videoId) {
@@ -396,6 +420,11 @@ io.sockets.on("connection", function(socket) {
             }
         }
 
+        if (loungeIndex === undefined || userIndex === undefined) {
+            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+            return false;
+        }
+
         var musicFound = false;
         for (var i = 0; i < lounges[loungeIndex].music.length; i++) {
             if (lounges[loungeIndex].music[i].videoId == videoId) {
@@ -414,43 +443,59 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
+        var alreadyVoted = false;
         if (lounges[loungeIndex].users[userIndex].likedMusic.indexOf(videoId) != -1) {
             lounges[loungeIndex].users[userIndex].likedMusic.splice(lounges[loungeIndex].users[userIndex].likedMusic.indexOf(videoId), 1);
-        }    
+            alreadyVoted = true;
+        }
 
-        lounges[loungeIndex].music[musicIndex].score--;
+        var scoreToMinus;
+        if (alreadyVoted) {
+            lounges[loungeIndex].music[musicIndex].score -= 2;
+            scoreToMinus = 2;
+        } else {
+            lounges[loungeIndex].music[musicIndex].score--;
+            scoreToMinus = 1;
+        }
+
         lounges[loungeIndex].users[userIndex].dislikedMusic.push(videoId);
         socket.emit("retrieveNewDislikedMusic", videoId);
-        io.to(lounges[loungeIndex].loungeName).emit("minusScore", videoId);
+        io.to(lounges[loungeIndex].loungeName).emit("minusScore", { "videoId": videoId, "scoreToMinus": scoreToMinus });
 
-        var totalUserVote = 0;
+        var totalUserVote = lounges[loungeIndex].users.length;
+
+        for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
+            if (disconnectedUsersWaiting[i].lounge == lounges[loungeIndex].loungeName) {
+                totalUserVote++;
+            }
+        }
+
+        var totalDislike = 0;
 
         for (var i = 0; i < lounges[loungeIndex].users.length; i++) {
-        	var likedMusicIndex = lounges[loungeIndex].users[i].likedMusic.indexOf(videoId);
-        	var dislikedMusicIndex = lounges[loungeIndex].users[i].dislikedMusic.indexOf(videoId);
-
-        	if (likedMusicIndex != -1 || dislikedMusicIndex != -1) {
-        		totalUserVote++;
-        	}
+            for (var j = 0; j < lounges[loungeIndex].users[i].dislikedMusic.length; j++) {
+                if (lounges[loungeIndex].users[i].dislikedMusic[j] == videoId) {
+                    totalDislike++;
+                }
+            }
         }
 
         for (var i = 0; i < disconnectedUsersWaiting.length; i++) {
-        	var likedMusicIndex = disconnectedUsersWaiting[i].likedMusic.indexOf(videoId);
-        	var dislikedMusicIndex = disconnectedUsersWaiting[i].dislikedMusic.indexOf(videoId);
+            for (var j = 0; j < disconnectedUsersWaiting[i].dislikedMusic.length; j++) {
+                if (disconnectedUsersWaiting[i].dislikedMusic[j] == videoId && disconnectedUsersWaiting[i].lounge == lounges[loungeIndex].loungeName) {
+                    totalDislike++;
+                }
+            }
+        }
 
-        	if (disconnectedUsersWaiting[i].lounge == lounges[loungeIndex].loungeName && (likedMusicIndex != -1 || dislikedMusicIndex != -1) ) {
-        		totalUserVote++;
-        	}
+        if (totalDislike > (totalUserVote / 2)) {
+            lounges[loungeIndex].music.splice(musicIndex, 1);
+            io.to(lounges[loungeIndex].loungeName).emit("musicRemoved", videoId);
         }
-        
-        if ( lounges[loungeIndex].music[musicIndex].score < ( -1 * (totalUserVote / 2) ) ) {
-        	io.to(lounges[loungeIndex].loungeName).emit("musicRemoved", videoId);
-        }
-        
     });
 
-    socket.on("removeMusic", function(videoId) {
-    	for (var i = 0; i < lounges.length; i++) {
+    socket.on("cancelVote", function(videoId) {
+        for (var i = 0; i < lounges.length; i++) {
             for (var j = 0; j < lounges[i].users.length; j++) {
                 if (socket.id == lounges[i].users[j].userSessionId) {
                     var loungeIndex = i;
@@ -459,9 +504,68 @@ io.sockets.on("connection", function(socket) {
             }
         }
 
+        if (loungeIndex === undefined || userIndex === undefined) {
+            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+            return false;
+        }
+
+        var musicFound = false;
+        for (var i = 0; i < lounges[loungeIndex].music.length; i++) {
+            if (lounges[loungeIndex].music[i].videoId == videoId) {
+                var musicIndex = i;
+                musicFound = true;
+            }
+        }
+
+        if (musicFound == false) {
+            socket.emit("errorMessage", "Video non trouvée dans ce salon");
+            return false;
+        }
+
+        for (var i = 0; i < lounges[loungeIndex].users[userIndex].likedMusic.length; i++) {
+            if (lounges[loungeIndex].users[userIndex].likedMusic[i] == videoId) {
+                var alreadyLikedOrDisliked = "liked";
+                var musicUserIndex = i;
+
+            }
+        }
+
+        for (var i = 0; i < lounges[loungeIndex].users[userIndex].dislikedMusic.length; i++) {
+            if (lounges[loungeIndex].users[userIndex].dislikedMusic[i] == videoId) {
+                var alreadyLikedOrDisliked = "disliked";
+                var musicUserIndex = i;
+            }
+        }
+
+        if (alreadyLikedOrDisliked == "liked") {
+            io.to(lounges[loungeIndex].loungeName).emit("minusScore", { "videoId": videoId, "scoreToMinus": 1 });
+            lounges[loungeIndex].users[userIndex].likedMusic.splice(musicUserIndex, 1);
+            lounges[loungeIndex].music
+        } else if (alreadyLikedOrDisliked == "disliked") {
+            io.to(lounges[loungeIndex].loungeName).emit("addScore", { "videoId": videoId, "scoreToAdd": 1 });
+            lounges[loungeIndex].users[userIndex].dislikedMusic.splice(musicUserIndex, 1);
+            lounges[loungeIndex].music
+        }
+    });
+
+    socket.on("removeMusic", function(videoId) {
+        for (var i = 0; i < lounges.length; i++) {
+            for (var j = 0; j < lounges[i].users.length; j++) {
+                if (socket.id == lounges[i].users[j].userSessionId) {
+                    var loungeIndex = i;
+                    var userIndex = j;
+                }
+            }
+        }
+
+        if (loungeIndex === undefined || userIndex === undefined) {
+            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+            return false;
+        }
+
         if (lounges[loungeIndex].users[userIndex].isHost != true) {
-        	socket.emit("errorMessage", "Vous devez être l'hôte pour effectuer cette action");
-        	return false;
+            socket.emit("errorMessage", "Vous devez être l'hôte pour effectuer cette action");
+            return false;
         }
 
         var musicFound = false;
@@ -478,13 +582,13 @@ io.sockets.on("connection", function(socket) {
         }
 
         for (var j = 0; j < lounges[loungeIndex].users.length; j++) {
-        	if (lounges[loungeIndex].users[j].likedMusic.indexOf(videoId) != -1) {
-        		lounges[loungeIndex].users[j].likedMusic.splice(lounges[loungeIndex].users[j].likedMusic.indexOf(videoId), 1);
-        	}
+            if (lounges[loungeIndex].users[j].likedMusic.indexOf(videoId) != -1) {
+                lounges[loungeIndex].users[j].likedMusic.splice(lounges[loungeIndex].users[j].likedMusic.indexOf(videoId), 1);
+            }
 
-        	if (lounges[loungeIndex].users[j].dislikedMusic.indexOf(videoId) != -1) {
-        		lounges[loungeIndex].users[j].dislikedMusic.splice(lounges[loungeIndex].users[j].dislikedMusic.indexOf(videoId), 1);
-        	}
+            if (lounges[loungeIndex].users[j].dislikedMusic.indexOf(videoId) != -1) {
+                lounges[loungeIndex].users[j].dislikedMusic.splice(lounges[loungeIndex].users[j].dislikedMusic.indexOf(videoId), 1);
+            }
         }
 
         lounges[loungeIndex].music.splice(musicIndex, 1);
@@ -504,6 +608,11 @@ io.sockets.on("connection", function(socket) {
                     var userIndex = j;
                 }
             }
+        }
+
+        if (loungeIndex === undefined || userIndex === undefined) {
+            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+            return false;
         }
 
         if (typeof lounges[loungeIndex] == "undefined") {
@@ -543,6 +652,11 @@ io.sockets.on("connection", function(socket) {
                     var userIndex = j;
                 }
             }
+        }
+
+        if (loungeIndex === undefined || userIndex === undefined) {
+            socket.emit("errorMessage", "Vous n'êtes pas connecté(e) à un salon");
+            return false;
         }
 
         if (typeof lounges[loungeIndex] == "undefined") {
