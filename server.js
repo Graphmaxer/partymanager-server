@@ -126,7 +126,7 @@ io.sockets.on("connection", function(socket) {
             return false;
         }
 
-        if (/^[a-zA-Z0-9\u00C0-\u017F?!.:;,()- ]+$/.test(message)) {} else {
+        if (/^[a-zA-Z0-9\u00C0-\u017F?!.:;,()\- ]+$/.test(message)) {} else {
             socket.emit("errorMessage", "Vous pouvez seulement mettre un message avec des lettres, des chiffres et des espaces");
             return false;
         }
